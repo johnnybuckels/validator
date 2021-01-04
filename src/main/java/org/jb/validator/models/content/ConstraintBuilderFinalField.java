@@ -7,11 +7,11 @@ import java.util.function.Function;
 /**
  * Builder used for creating a constraint concerning a field and some from that field derived target value.
  */
-public class CollectionItemConstraintBuilderFinal<CT, FT, BT extends Comparable<BT>> {
+public class ConstraintBuilderFinalField<CT, FT, BT extends Comparable<BT>> {
 
     // --- internal fields for construction
     protected Function<FT, BT> targetGetter;
-    protected FieldConstraintBuilder<CT, FT> fieldConstraintBuilder;
+    protected ConstraintBuilderField<CT, FT> constraintBuilderField;
     protected ContentConstraintBoundTypeEnum boundType;
     protected BT boundValue;
     protected boolean nullable = true;
@@ -19,43 +19,43 @@ public class CollectionItemConstraintBuilderFinal<CT, FT, BT extends Comparable<
     // --- constraint key fields
     protected Function<CT, String> boundValidationFailMessageFunction;
 
-    protected CollectionItemConstraintBuilderFinal(FieldConstraintBuilder<CT, FT> fieldConstraintBuilder, Function<FT, BT> targetGetter) {
-        this.fieldConstraintBuilder = fieldConstraintBuilder;
+    protected ConstraintBuilderFinalField(ConstraintBuilderField<CT, FT> constraintBuilderField, Function<FT, BT> targetGetter) {
+        this.constraintBuilderField = constraintBuilderField;
         this.targetGetter = targetGetter;
     }
 
     // ----- appending
 
-    public CollectionItemConstraintBuilderFinal<CT, FT, BT> isNotNullable() {
+    public ConstraintBuilderFinalField<CT, FT, BT> isNotNullable() {
         this.nullable = false;
         return this;
     }
 
-    public CollectionItemConstraintBuilderFinal<CT, FT, BT> isLessThan(BT boundValue) {
+    public ConstraintBuilderFinalField<CT, FT, BT> isLessThan(BT boundValue) {
         this.boundValue = boundValue;
         this.boundType = ContentConstraintBoundTypeEnum.MAX;
         return this;
     }
 
-    public CollectionItemConstraintBuilderFinal<CT, FT, BT> isLessOrEqualThan(BT boundValue) {
+    public ConstraintBuilderFinalField<CT, FT, BT> isLessOrEqualThan(BT boundValue) {
         this.boundValue = boundValue;
         this.boundType = ContentConstraintBoundTypeEnum.MAXINCL;
         return this;
     }
 
-    public CollectionItemConstraintBuilderFinal<CT, FT, BT> isGreaterThan(BT boundValue) {
+    public ConstraintBuilderFinalField<CT, FT, BT> isGreaterThan(BT boundValue) {
         this.boundValue = boundValue;
         this.boundType = ContentConstraintBoundTypeEnum.MIN;
         return this;
     }
 
-    public CollectionItemConstraintBuilderFinal<CT, FT, BT> isGreaterOrEqualThan(BT boundValue) {
+    public ConstraintBuilderFinalField<CT, FT, BT> isGreaterOrEqualThan(BT boundValue) {
         this.boundValue = boundValue;
         this.boundType = ContentConstraintBoundTypeEnum.MININCL;
         return this;
     }
 
-    public CollectionItemConstraintBuilderFinal<CT, FT, BT> isEqualTo(BT boundValue) {
+    public ConstraintBuilderFinalField<CT, FT, BT> isEqualTo(BT boundValue) {
         this.boundValue = boundValue;
         this.boundType = ContentConstraintBoundTypeEnum.EXACT;
         return this;
@@ -75,9 +75,9 @@ public class CollectionItemConstraintBuilderFinal<CT, FT, BT extends Comparable<
     private Function<CT, Boolean> createNotNullValidationFunction() {
         Function<CT, Boolean> fun;
         if(nullable) {
-            fun = fieldConstraintBuilder.evaluateToFalseFunction;
+            fun = constraintBuilderField.evaluateToFalseFunction;
         } else {
-            fun = fieldConstraintBuilder.isNotNullConstraintViolatedFunction;
+            fun = constraintBuilderField.isNotNullConstraintViolatedFunction;
         }
         return fun;
     }
@@ -85,11 +85,11 @@ public class CollectionItemConstraintBuilderFinal<CT, FT, BT extends Comparable<
     private Function<CT, Boolean> createBoundValidationFunction() {
         Function<CT, Boolean> fun;
         if(boundValue == null) {
-            fun = fieldConstraintBuilder.evaluateToFalseFunction;
+            fun = constraintBuilderField.evaluateToFalseFunction;
         } else {
             fun = objectToValidate -> {
                 boolean isViolated;
-                FT fieldToValidate = fieldConstraintBuilder.fieldGetter.apply(objectToValidate);
+                FT fieldToValidate = constraintBuilderField.fieldGetter.apply(objectToValidate);
                 if(fieldToValidate != null) {
                     isViolated = boundType.getIsBoundBrokenFunction().apply(
                             targetGetter.apply(fieldToValidate).compareTo(boundValue)
@@ -104,16 +104,17 @@ public class CollectionItemConstraintBuilderFinal<CT, FT, BT extends Comparable<
     }
 
     private Function<CT, String> createNotNullFailMessageFunction() {
-        return fieldConstraintBuilder.notNullFailMessageFunction;
+        return constraintBuilderField.notNullFailMessageFunction;
     }
 
     private Function<CT, String> createBoundFailMessageFunction() {
         return objectToValidate -> String.format(
-                "Validation failed on object %s: Field target value must be %s %s but was %s.",
+                "Validation failed [object: %s, field value: %s]: Target value must be %s %s but was %s.",
                 objectToValidate.getClass().getSimpleName(),
-                fieldConstraintBuilder.fieldGetter.andThen(targetGetter).apply(objectToValidate),
+                constraintBuilderField.fieldGetter.apply(objectToValidate),
                 boundType.getBoundAssertionString(),
-                boundValue
+                boundValue,
+                constraintBuilderField.fieldGetter.andThen(targetGetter).apply(objectToValidate)
         );
     }
 

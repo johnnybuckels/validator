@@ -1,6 +1,6 @@
 package org.jb.validator.models.content;
 
-import java.util.Objects;
+import java.util.Collection;
 import java.util.function.Function;
 
 public class Constraint<CT> {
@@ -9,8 +9,7 @@ public class Constraint<CT> {
     private final Function<CT, Boolean> isNotNullConstraintViolatedFunction;
     private final Function<CT, String> notNullValidationFailMessageFunction; // only created when starting an actual validation
     private final Function<CT, String> boundValidationFailMessageFunction; // only created when starting an actual validation
-
-    private String validationFailMessage;
+    private final String validationFailMessagePrefix;
 
     // ----- Constructors
 
@@ -23,28 +22,26 @@ public class Constraint<CT> {
         this.isNotNullConstraintViolatedFunction = isNotNullConstraintViolatedFunction;
         this.notNullValidationFailMessageFunction = notNullValidationFailMessageFunction;
         this.boundValidationFailMessageFunction = boundValidationFailMessageFunction;
+        validationFailMessagePrefix = String.format("Constraint %s was violated: ", this.constraintName);
     }
 
 
     // ----- Core Functions
 
-    public boolean isConstraintViolated(CT objectToValidate) {
-        boolean isViolated;
+    /**
+     * Validate the given object and return a validation message.
+     * If the validation passed, the returned string will be empty.
+     */
+    public String validate(CT objectToValidate) {
+        String message;
         if(isNotNullConstraintViolatedFunction.apply(objectToValidate)){
-            isViolated = true;
-            validationFailMessage = notNullValidationFailMessageFunction.apply(objectToValidate);
+            message = validationFailMessagePrefix + notNullValidationFailMessageFunction.apply(objectToValidate);
         } else if (isBoundConstraintViolatedFunction.apply(objectToValidate)){
-            isViolated = true;
-            validationFailMessage = boundValidationFailMessageFunction.apply(objectToValidate);
+            message = validationFailMessagePrefix + boundValidationFailMessageFunction.apply(objectToValidate);
         } else {
-            isViolated = false;
-            validationFailMessage = "";
+            message = "";
         }
-        return isViolated;
-    }
-
-    public String getValidationFailMessage() {
-        return Objects.requireNonNullElse(validationFailMessage, "");
+        return message;
     }
 
     public String getConstraintName() {
@@ -53,7 +50,11 @@ public class Constraint<CT> {
 
     // ----- Builder initializers
 
-    public static <X, Y> FieldConstraintBuilder<X, Y> forField(Function<X, Y> fieldGetter) {
-        return new FieldConstraintBuilder<>(fieldGetter);
+    public static <X, Y> ConstraintBuilderField<X, Y> forField(Function<X, Y> fieldGetter) {
+        return new ConstraintBuilderField<>(fieldGetter);
+    }
+
+    public static <X, Y extends Collection<R>, R> ConstraintBuilderCollectionItem<X, R, Y> forItemsInCollection(Function<X, Y> fieldGetter) {
+        return new ConstraintBuilderCollectionItem<>(fieldGetter);
     }
 }

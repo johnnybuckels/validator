@@ -2,7 +2,7 @@ package org.jb.validator.models.content;
 
 import java.util.function.Function;
 
-public class FieldConstraintBuilder<CT, FT>{
+public abstract class ConstraintBuilder<CT, FT> {
 
     protected final Function<CT, String> evaluateToEmptyStringFunction = objectToValidate -> "";
     protected final Function<CT, String> notNullFailMessageFunction = objectToValidate ->
@@ -15,13 +15,9 @@ public class FieldConstraintBuilder<CT, FT>{
 
     protected Function<CT, FT> fieldGetter;
 
-    protected FieldConstraintBuilder(Function<CT, FT> fieldGetter) {
+    protected ConstraintBuilder(Function<CT, FT> fieldGetter) {
         this.fieldGetter = fieldGetter;
         this.isNotNullConstraintViolatedFunction = objectToValidate -> fieldGetter.apply(objectToValidate) == null;
-    }
-
-    public <X extends Comparable<X>> FieldConstraintBuilderFinal<CT, FT, X> suchThat(Function<FT, X> targetGetter){
-        return new FieldConstraintBuilderFinal<>(this, targetGetter);
     }
 
     public Constraint<CT> notNullConstraint(String constraintName){
@@ -31,5 +27,4 @@ public class FieldConstraintBuilder<CT, FT>{
                 evaluateToEmptyStringFunction, notNullFailMessageFunction
         );
     }
-
 }

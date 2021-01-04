@@ -16,15 +16,21 @@ class TestingApplicationTests {
 
 	@Test
 	void genericTest() {
-		Constraint<TestClass> cls = Constraint.forField(TestClass::getSomeString)
-				.suchThat(String::length).isLessOrEqualThan(10).isNotNullable().buildWithName("someStringConstraint");
-		TestClass objectToValidate = new TestClass();
-		String someString = "someTooLongString";
-		Set<Integer> set = Set.of(1, 2, 10, 99);
-		objectToValidate.setSomeString(null);
-		objectToValidate.setSomeNumbers(set);
+		Constraint<TestClass> constraint = Constraint.forField(TestClass::getSomeString)
+				.suchThat(String::isBlank).isEqualTo(true).isNotNullable().buildWithName("someStringConstraint");
+		Constraint<TestClass> constraint2 = Constraint.forItemsInCollection(TestClass::getSomeNumbers)
+				.suchThat(Integer::signum).isEqualTo(1).buildWithName("signumEqualToOne");
 
-		System.out.println(cls.isConstraintViolated(objectToValidate));
+		TestClass objectToValidate = new TestClass();
+		String someString = "jfghjkhfdgj";
+		Set<Integer> set = Set.of(1, 2, -10, 99);
+		objectToValidate.setSomeString(someString);
+		objectToValidate.setSomeNumbers(set);
+		constraint.validate(objectToValidate);
+		System.out.println(constraint.validate(objectToValidate));
+		System.out.println(constraint2.validate(objectToValidate));
+
+
 	}
 
 }
