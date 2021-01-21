@@ -1,36 +1,37 @@
 package org.jb.validator;
 
-import org.jb.validator.models.content.Constraint;
+import org.jb.validator.exceptions.ValidatorException;
+import org.jb.validator.objects.RepoDummy;
+import org.jb.validator.objects.TestClass;
+import org.jb.validator.objects.TestClass2;
+import org.jb.validator.validators.TestValidator;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 class TestingApplicationTests {
 
 	@Test
-	void sandboxText() {
-		Function<String, Integer> fun = String::length;
-		System.out.println(fun.getClass().getCanonicalName());
+	void repoTest() {
+		BiFunction<RepoDummy, String, Optional<TestClass>> fun = RepoDummy::findById;
+		System.out.println(fun.apply(new RepoDummy(), "idString"));
 	}
 
 	@Test
-	void genericTest() {
-		Constraint<TestClass> constraint = Constraint.forField(TestClass::getSomeString)
-				.suchThat(String::isBlank).isEqualTo(true).isNotNullable().buildWithName("someStringConstraint");
-		Constraint<TestClass> constraint2 = Constraint.forItemsInCollection(TestClass::getSomeNumbers)
-				.suchThat(Integer::signum).isEqualTo(1).buildWithName("signumEqualToOne");
-
+	void genericTest() throws ValidatorException {
 		TestClass objectToValidate = new TestClass();
-		String someString = "jfghjkhfdgj";
-		Set<Integer> set = Set.of(1, 2, -10, 99);
-		objectToValidate.setSomeString(someString);
+		List<Integer> set = List.of(1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99, 1, 2, -10, 99);
+		objectToValidate.setId("notNullId12323");
+		objectToValidate.setSomeString("jfghjkhfdgj");
 		objectToValidate.setSomeNumbers(set);
-		constraint.validate(objectToValidate);
-		System.out.println(constraint.validate(objectToValidate));
-		System.out.println(constraint2.validate(objectToValidate));
+		objectToValidate.setTestClass2(new TestClass2());
+		objectToValidate.getTestClass2().setId2(null);
 
-
+		TestValidator testValidator = new TestValidator();
+		testValidator.validate(objectToValidate);
 	}
 
 }

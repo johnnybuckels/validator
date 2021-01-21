@@ -13,10 +13,10 @@ import java.util.function.Function;
  * is broken.
  */
 public enum ContentConstraintBoundTypeEnum {
-    MIN("greater to", x -> x < 0),
-    MININCL("greater or equal to", x -> x <= 0),
-    MAX("smaller to", x -> x > 0),
-    MAXINCL("smaller or equal to", x -> x >= 0),
+    MIN("greater than or equal to", x -> x <= 0),
+    MININCL("greater than or equal to", x -> x < 0),
+    MAX("smaller than", x -> x >= 0),
+    MAXINCL("smaller than or equal to", x -> x > 0),
     EXACT("equal to", x -> x != 0);
 
     private final String boundAssertionString;
