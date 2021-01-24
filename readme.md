@@ -25,8 +25,8 @@ public class TestValidator extends AbstractValidator<TestClass> {
     public Collection<Constraint<TestClass>> constraintSupplier() {
         return List.of(
                 Constraint.forNotNullField(TestClass::getId).addName("idNotNull"),
-                Constraint.forNotNullField(TestClass::getSomeNumbers).addName("someNumbersNotNull"),
-                Constraint.forNotNullField(TestClass::getSomeString).addName("someStringNotNull")
+                Constraint.forField(TestClass::getId).suchThatTarget(String::length).isLessOrEqualThan(10).addName("idLength"),
+                Constraint.forItemsInCollection(TestClass::getSomeNumbers).suchThatTarget(x -> x).isGreaterOrEqualThan(0).addName("noNegativeNumber")
         );
     }
 
@@ -41,7 +41,6 @@ Use the validator.
 
 ```java
 class Testing {
-
 	@Test
 	void testingValidator() {
 		TestClass objectToValidate = new TestClass();
@@ -51,12 +50,12 @@ class Testing {
 		objectToValidate.setSomeNumbers(set);
 		
 		TestValidator testValidator = new TestValidator();
-		try {
-            testValidator.validate(objectToValidate);
+		
+		try { 
+		    testValidator.validate(objectToValidate);
         } catch (Exception e) {
 		    System.out.println(e.toString());
         }
 	}
-
 }
 ```
