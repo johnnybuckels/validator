@@ -1,4 +1,4 @@
-package org.jb.validator.exceptions;
+package jb.validator.exceptions;
 
 public class TestException extends Exception{
     public TestException(String message) {

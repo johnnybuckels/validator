@@ -1,4 +1,4 @@
-package org.jb.validator;
+package jb.validator;
 
 
 public class Main {

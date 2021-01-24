@@ -1,11 +1,11 @@
-package org.jb.validator.models;
+package jb.validator.models;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ConstraintBuilderField<CT, FT> {
+public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalizer<CT, FT>{
 
     protected Function<CT, FT> fieldGetter;
 
@@ -13,13 +13,20 @@ public class ConstraintBuilderField<CT, FT> {
         this.fieldGetter = fieldGetter;
     }
 
+    /**
+     * Walks one step further trough the constraint building process by defining the target value of the field under validation.
+     * Examples: String::length, Integer::signum, BigDecimal::precision, Collection::size, x -> x
+     * @param targetGetter supplier for the value derived from the field value that is the actual target of this constraint.
+     * @param <X> type of the target value (must implement Comparable<X>).
+     * @return the next constraint builder in the building process
+     */
     public <X extends Comparable<X>> ConstraintBuilderFinalField<CT, FT, X> suchThatTarget(Function<FT, X> targetGetter){
         return new ConstraintBuilderFinalField<>(this, targetGetter);
     }
 
     // ----- "data" object validation
 
-    public <X> Constraint<CT> isExistingUsing(Function<FT, Optional<X>> serviceFunction) {
+    public <X> Constraint<CT> assertExistenceUsing(Function<FT, Optional<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -30,11 +37,11 @@ public class ConstraintBuilderField<CT, FT> {
         };
         return new Constraint<>(
                 isConstraintViolatedFunction,
-                getValidationFailMessageFunction("Requested data object does not exist.")
+                getValidationFailMessageFunction(existenceFailMessageDefault)
         );
     }
 
-    public <X> Constraint<CT> isAbsentUsing(Function<FT, Optional<X>> serviceFunction) {
+    public <X> Constraint<CT> assertAbsenceUsing(Function<FT, Optional<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -45,11 +52,11 @@ public class ConstraintBuilderField<CT, FT> {
         };
         return new Constraint<>(
                 isConstraintViolatedFunction,
-                getValidationFailMessageFunction("Requested data object already exists.")
+                getValidationFailMessageFunction(absenceFailMessageDefault)
         );
     }
 
-    public <X> Constraint<CT> isEmptyUsing(Function<FT, Collection<X>> serviceFunction) {
+    public <X> Constraint<CT> assertEmptyUsing(Function<FT, Collection<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -60,11 +67,11 @@ public class ConstraintBuilderField<CT, FT> {
         };
         return new Constraint<>(
                 isConstraintViolatedFunction,
-                getValidationFailMessageFunction("Requested data object collection is empty")
+                getValidationFailMessageFunction(emptyCollectionFailMessageDefault)
         );
     }
 
-    public <X> Constraint<CT> isNotEmptyUsing(Function<FT, Collection<X>> serviceFunction) {
+    public <X> Constraint<CT> assertNotEmptyUsing(Function<FT, Collection<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -75,13 +82,13 @@ public class ConstraintBuilderField<CT, FT> {
         };
         return new Constraint<>(
                 isConstraintViolatedFunction,
-                getValidationFailMessageFunction("Requested data object collection is not empty")
+                getValidationFailMessageFunction(nonEmptyCollectionFailMessageDefault)
         );
     }
 
     // ----- nested validator
 
-    public <ET extends Throwable> Constraint<CT> doesNotThrowUsing(Consumer<FT> fieldConsumer){
+    public Constraint<CT> assertNotThrowingUsing(Consumer<FT> fieldConsumer){
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if (fieldToValidate != null) {
@@ -93,21 +100,25 @@ public class ConstraintBuilderField<CT, FT> {
             }
             return false;
         };
+        // When this function is actually called, fieldGetter.apply(objectToValidate) does not return null or an empty list (since isConstraintViolatedFunction evaluated to true)
         Function<CT, String> getCustomFailMessageFunction = objectToValidate -> {
-            String throwMessage;
+            String throwMessage = "THIS MESSAGE SHOULD NEVER APPEAR";  // this value will be overwritten by the catch block which is expected to get triggered
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
-            try {
-                fieldConsumer.accept(fieldToValidate);
-                throwMessage = "THIS MESSAGE SHOULD NEVER APPEAR";
-            } catch (Throwable e) {
-                throwMessage = e.toString();
+            if (fieldToValidate != null) {
+                try {
+                    fieldConsumer.accept(fieldToValidate);
+                } catch (Throwable e) {
+                    throwMessage = e.toString();
+                }
+                return String.format(
+                        "[object: %s, field value: %s]: An unwanted exception occurred (%s)",
+                        objectToValidate.getClass().getSimpleName(),
+                        fieldToValidate,
+                        throwMessage
+                );
+            } else {
+                return "";
             }
-            return String.format(
-                    "[object: %s, field value: %s]: An unwanted exception occurred (%s)",
-                    objectToValidate.getClass().getSimpleName(),
-                    fieldToValidate,
-                    throwMessage
-            );
         };
         return new Constraint<>(
                 isConstraintViolatedFunction,

@@ -1,16 +1,17 @@
-package org.jb.validator;
+package jb.validator;
 
-import org.jb.validator.exceptions.ValidatorException;
-import org.jb.validator.objects.RepoDummy;
-import org.jb.validator.objects.TestClass;
-import org.jb.validator.objects.TestClass2;
-import org.jb.validator.validators.TestValidator;
+import jb.validator.exceptions.ValidatorException;
+import jb.validator.objects.RepoDummy;
+import jb.validator.objects.TestClass;
+import jb.validator.objects.TestClass2;
+import jb.validator.validators.TestValidator;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestingApplicationTests {
 
@@ -27,11 +28,28 @@ class TestingApplicationTests {
 		objectToValidate.setId("notNullId12323");
 		objectToValidate.setSomeString("jfghjkhfdgj");
 		objectToValidate.setSomeNumbers(set);
-		objectToValidate.setTestClass2(new TestClass2());
-		objectToValidate.getTestClass2().setId2(null);
+		TestClass2 testClass2 = new TestClass2();
+		testClass2.setId2(null);
+		objectToValidate.setTestClass2(testClass2);
+		objectToValidate.setTestClass2Collection(List.of(testClass2, testClass2));
+		TestValidator testValidator = new TestValidator();
+		assertThrows(ValidatorException.class, () -> testValidator.validate(objectToValidate));
+	}
+
+	@Test
+	void testingValidator() throws ValidatorException {
+		TestClass objectToValidate = new TestClass();
+		List<Integer> set = List.of(1, 2, -10, 99, 11, 22);
+		objectToValidate.setId("notNullId12323");
+		objectToValidate.setSomeString("jfghjkhfdgj");
+		objectToValidate.setSomeNumbers(set);
 
 		TestValidator testValidator = new TestValidator();
-		testValidator.validate(objectToValidate);
+		try {
+			testValidator.validate(objectToValidate);
+		} catch (Exception e) {
+			System.out.println(e.toString());
+		}
 	}
 
 }

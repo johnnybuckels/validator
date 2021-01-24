@@ -1,4 +1,4 @@
-package org.jb.validator.constants;
+package jb.validator.constants;
 
 import java.util.function.Function;
 
@@ -8,7 +8,7 @@ import java.util.function.Function;
  *  "assert that MAXIMUM length of string s is 10"
  *  translates to something like
  *  assert s.length() < 10;
- * The respective enum constant holds information about the "sign" and the respective Bi-Function, evaluating
+ * The enum constant holds information about the "sign" and the respective Function, evaluating
  * the expression. The evaluation states if the bound is violated. Hence, evaluating to "true" means, that the bound
  * is broken.
  */

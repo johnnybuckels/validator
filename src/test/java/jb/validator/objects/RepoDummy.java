@@ -1,4 +1,4 @@
-package org.jb.validator.objects;
+package jb.validator.objects;
 
 
 import java.util.Optional;

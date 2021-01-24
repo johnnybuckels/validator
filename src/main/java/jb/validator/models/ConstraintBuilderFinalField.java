@@ -1,25 +1,26 @@
-package org.jb.validator.models;
+package jb.validator.models;
 
-import org.jb.validator.constants.ContentConstraintBoundTypeEnum;
+import jb.validator.constants.ContentConstraintBoundTypeEnum;
 
-import java.util.Collection;
 import java.util.function.Function;
 
 /**
  * Builder used for creating a constraint concerning a field and some from that field derived target value.
  */
-public class ConstraintBuilderFinalCollectionItem<CT, IT, FT extends Collection<IT>, BT extends Comparable<BT>> {
+public class ConstraintBuilderFinalField<CT, FT, BT extends Comparable<BT>> implements BoundConstraintFinalizer<CT, BT>{
 
     // --- internal fields for construction
-    protected Function<IT, BT> targetGetter;
-    protected ConstraintBuilderCollectionItem<CT, IT, FT> constraintBuilderCollectionItem;
+    protected Function<FT, BT> targetGetter;
+    protected ConstraintBuilderField<CT, FT> constraintBuilderField;
     protected ContentConstraintBoundTypeEnum boundType;
     protected BT boundValue;
 
-    protected ConstraintBuilderFinalCollectionItem(ConstraintBuilderCollectionItem<CT, IT, FT> constraintBuilderCollectionItem, Function<IT, BT> targetGetter) {
-        this.constraintBuilderCollectionItem = constraintBuilderCollectionItem;
+    protected ConstraintBuilderFinalField(ConstraintBuilderField<CT, FT> constraintBuilderField, Function<FT, BT> targetGetter) {
+        this.constraintBuilderField = constraintBuilderField;
         this.targetGetter = targetGetter;
     }
+
+    // ----- appending
 
     public Constraint<CT> isLessThan(BT boundValue) {
         this.boundValue = boundValue;
@@ -51,24 +52,15 @@ public class ConstraintBuilderFinalCollectionItem<CT, IT, FT extends Collection<
         return new Constraint<>(createBoundValidationFunction(), createBoundFailMessageFunction());
     }
 
-
-    // ----- building
-
-    public Constraint<CT> buildWithName(String constraintName) {
-
-        return new Constraint<>(createBoundValidationFunction(), createBoundFailMessageFunction());
-    }
+    // --------- private functions
 
     private Function<CT, Boolean> createBoundValidationFunction() {
         return objectToValidate -> {
             boolean isViolated;
-            FT fieldToValidate = constraintBuilderCollectionItem.fieldGetter.apply(objectToValidate);
+            FT fieldToValidate = constraintBuilderField.fieldGetter.apply(objectToValidate);
             if(fieldToValidate != null) {
-                isViolated = fieldToValidate.stream()
-                        .anyMatch(collectionItem ->
-                                boundType.getIsBoundBrokenFunction().apply(
-                                        targetGetter.apply(collectionItem).compareTo(boundValue)
-                                )
+                isViolated = boundType.getIsBoundBrokenFunction().apply(
+                        targetGetter.apply(fieldToValidate).compareTo(boundValue)
                 );
             } else {
                 isViolated = false;
@@ -78,21 +70,14 @@ public class ConstraintBuilderFinalCollectionItem<CT, IT, FT extends Collection<
     }
 
     private Function<CT, String> createBoundFailMessageFunction() {
-        int maxStringLength = 100;
-        String endPart = "...]";
-        return objectToValidate -> {
-            String collectionString = constraintBuilderCollectionItem.fieldGetter.apply(objectToValidate).toString();
-            if(collectionString.length() > maxStringLength) {
-                collectionString = collectionString.substring(0, maxStringLength - endPart.length()) + endPart;
-            }
-            return String.format(
-                    "[object: %s, collection: %s]: The target value of every item must be %s %s",
-                    objectToValidate.getClass().getSimpleName(),
-                    collectionString,
-                    boundType.getBoundAssertionString(),
-                    boundValue
-            );
-        };
+        return objectToValidate -> String.format(
+                "[object: %s, field value: %s]: Target value must be %s %s but was %s",
+                objectToValidate.getClass().getSimpleName(),
+                constraintBuilderField.fieldGetter.apply(objectToValidate),
+                boundType.getBoundAssertionString(),
+                boundValue,
+                constraintBuilderField.fieldGetter.andThen(targetGetter).apply(objectToValidate)
+        );
     }
 
 }
