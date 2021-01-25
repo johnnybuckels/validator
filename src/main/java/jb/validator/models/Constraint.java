@@ -76,20 +76,4 @@ public class Constraint<CT> {
         return new ConstraintBuilderCollectionItem<>(fieldGetter);
     }
 
-    /**
-     * Creates a simple not-null constraint for the given field.
-     * @param fieldGetter supplier of the field value under validation. Usually this is should be a reference to an instance
-     *                    method of type X (X::getMyField)
-     * @param <X> type of the object under validation.
-     * @param <Y> type of the field under validation.
-     * @return a not-null constraint for the respective field.
-     */
-    public static <X, Y> Constraint<X> forNotNullField(Function<X, Y> fieldGetter) {
-        return new Constraint<>(
-                objectToValidate ->
-                        fieldGetter.apply(objectToValidate) == null,
-                objectToValidate ->
-                        String.format("Validation failed on object %s: Field value was null", objectToValidate.getClass().getSimpleName())
-        );
-    }
 }

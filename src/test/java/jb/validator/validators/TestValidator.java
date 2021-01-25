@@ -17,15 +17,15 @@ public class TestValidator extends AbstractValidator<TestClass> {
     @Override
     public Collection<Constraint<TestClass>> constraintSupplier() {
         return List.of(
-                Constraint.forNotNullField(TestClass::getId).addName("idNotNull"),
-                Constraint.forNotNullField(TestClass::getSomeNumbers).addName("someNumbersNotNull"),
-                Constraint.forNotNullField(TestClass::getSomeString).addName("someStringNotNull"),
+                Constraint.forField(TestClass::getId).notNull().addName("idNotNull"),
+                Constraint.forField(TestClass::getSomeNumbers).notNull().addName("someNumbersNotNull"),
+                Constraint.forField(TestClass::getSomeString).notNull().addName("someStringNotNull"),
                 Constraint.forField(TestClass::getId).suchThatTarget(String::length).isLessOrEqualThan(10).addName("idLength"),
                 Constraint.forField(TestClass::getSomeNumbers).suchThatTarget(Collection::size).isGreaterOrEqualThan(0).addName("someNumbersNotEmpty"),
                 Constraint.forItemsInCollection(TestClass::getSomeNumbers).suchThatTarget(x -> x).isGreaterOrEqualThan(0).addName("noNegativeNumber"),
-                Constraint.forField(TestClass::getSomeString).assertAbsenceUsing(repoDummy::findById).addName("idNotPresent"),
-                Constraint.forField(TestClass::getTestClass2).assertNotThrowingUsing(testValidator2::validate).addName("validateTestClass2"),
-                Constraint.forItemsInCollection(TestClass::getTestClass2Collection).assertNotThrowingUsing(testValidator2::validate).addName("validator2ForCollectionItems")
+                Constraint.forField(TestClass::getSomeString).absentUsing(repoDummy::findById).addName("idNotPresent"),
+                Constraint.forField(TestClass::getTestClass2).noThrowsUsing(testValidator2::validate).addName("validateTestClass2"),
+                Constraint.forItemsInCollection(TestClass::getTestClass2Collection).noThrowsUsing(testValidator2::validate).addName("validator2ForCollectionItems")
                 );
     }
 

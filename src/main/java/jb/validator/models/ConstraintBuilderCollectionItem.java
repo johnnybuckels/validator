@@ -1,8 +1,10 @@
 package jb.validator.models;
 
+import jb.validator.ThrowingConsumer;
+
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ConstraintBuilderCollectionItem<CT, IT, FT extends Collection<IT>> implements ServiceConstraintFinalizer<CT, IT>{
@@ -26,7 +28,7 @@ public class ConstraintBuilderCollectionItem<CT, IT, FT extends Collection<IT>> 
 
     // ----- "data" object validation
 
-    public <X> Constraint<CT> assertExistenceUsing(Function<IT, Optional<X>> serviceFunction) {
+    public <X> Constraint<CT> presentUsing(Function<IT, Optional<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null || fieldToValidate.isEmpty()) {
@@ -41,7 +43,7 @@ public class ConstraintBuilderCollectionItem<CT, IT, FT extends Collection<IT>> 
         );
     }
 
-    public <X> Constraint<CT> assertAbsenceUsing(Function<IT, Optional<X>> serviceFunction) {
+    public <X> Constraint<CT> absentUsing(Function<IT, Optional<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null || fieldToValidate.isEmpty()) {
@@ -56,7 +58,7 @@ public class ConstraintBuilderCollectionItem<CT, IT, FT extends Collection<IT>> 
         );
     }
 
-    public <X> Constraint<CT> assertEmptyUsing(Function<IT, Collection<X>> serviceFunction) {
+    public <X> Constraint<CT> emptyUsing(Function<IT, Collection<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null || fieldToValidate.isEmpty()) {
@@ -71,7 +73,7 @@ public class ConstraintBuilderCollectionItem<CT, IT, FT extends Collection<IT>> 
         );
     }
 
-    public <X> Constraint<CT> assertNotEmptyUsing(Function<IT, Collection<X>> serviceFunction) {
+    public <X> Constraint<CT> notEmptyUsing(Function<IT, Collection<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null || fieldToValidate.isEmpty()) {
@@ -88,7 +90,7 @@ public class ConstraintBuilderCollectionItem<CT, IT, FT extends Collection<IT>> 
 
     // ----- nested validator
 
-    public Constraint<CT> assertNotThrowingUsing(Consumer<IT> fieldConsumer){
+    public Constraint<CT> noThrowsUsing(ThrowingConsumer<IT> fieldConsumer){
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if (fieldToValidate != null && !fieldToValidate.isEmpty()) {
@@ -119,6 +121,26 @@ public class ConstraintBuilderCollectionItem<CT, IT, FT extends Collection<IT>> 
         return new Constraint<>(
                 isConstraintViolatedFunction,
                 getCustomFailMessageFunction
+        );
+    }
+
+    // ----- no nulls
+
+    /**
+     * Creates a simple not-null constraint for the given field.
+     * This constraint will fail if any item in the collection is null.
+     * @return a not-null constraint for the respective field.
+     */
+    public Constraint<CT> notNull() {
+        return new Constraint<>(
+                objectToValidate -> {
+                    FT fieldValue = fieldGetter.apply(objectToValidate);
+                    if(fieldValue == null) {
+                        return false;
+                    }
+                    return fieldValue.stream().anyMatch(Objects::isNull);
+                },
+                getValidationFailMessageFunction("Item value was null")
         );
     }
 

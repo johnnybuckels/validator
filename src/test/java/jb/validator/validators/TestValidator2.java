@@ -12,7 +12,7 @@ public class TestValidator2 extends AbstractValidator<TestClass2> {
     @Override
     public Collection<Constraint<TestClass2>> constraintSupplier() {
         return List.of(
-                Constraint.forNotNullField(TestClass2::getId2).addName("id2NotNull")
+                Constraint.forField(TestClass2::getId2).notNull().addName("id2NotNull")
                 );
     }
 

@@ -1,8 +1,9 @@
 package jb.validator.models;
 
+import jb.validator.ThrowingConsumer;
+
 import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalizer<CT, FT>{
@@ -26,7 +27,7 @@ public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalize
 
     // ----- "data" object validation
 
-    public <X> Constraint<CT> assertExistenceUsing(Function<FT, Optional<X>> serviceFunction) {
+    public <X> Constraint<CT> presentUsing(Function<FT, Optional<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -41,7 +42,7 @@ public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalize
         );
     }
 
-    public <X> Constraint<CT> assertAbsenceUsing(Function<FT, Optional<X>> serviceFunction) {
+    public <X> Constraint<CT> absentUsing(Function<FT, Optional<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -56,7 +57,7 @@ public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalize
         );
     }
 
-    public <X> Constraint<CT> assertEmptyUsing(Function<FT, Collection<X>> serviceFunction) {
+    public <X> Constraint<CT> emptyUsing(Function<FT, Collection<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -71,7 +72,7 @@ public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalize
         );
     }
 
-    public <X> Constraint<CT> assertNotEmptyUsing(Function<FT, Collection<X>> serviceFunction) {
+    public <X> Constraint<CT> notEmptyUsing(Function<FT, Collection<X>> serviceFunction) {
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if(fieldToValidate == null) {
@@ -88,7 +89,7 @@ public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalize
 
     // ----- nested validator
 
-    public Constraint<CT> assertNotThrowingUsing(Consumer<FT> fieldConsumer){
+    public Constraint<CT> noThrowsUsing(ThrowingConsumer<FT> fieldConsumer){
         Function<CT, Boolean> isConstraintViolatedFunction = objectToValidate -> {
             FT fieldToValidate = fieldGetter.apply(objectToValidate);
             if (fieldToValidate != null) {
@@ -123,6 +124,23 @@ public class ConstraintBuilderField<CT, FT> implements ServiceConstraintFinalize
         return new Constraint<>(
                 isConstraintViolatedFunction,
                 getCustomFailMessageFunction
+        );
+    }
+
+    // ----- not null
+
+    /**
+     * Creates a simple not-null constraint for the given field.
+     * @return a not-null constraint for the respective field.
+     */
+    public Constraint<CT> notNull() {
+        return new Constraint<>(
+                objectToValidate ->
+                        fieldGetter.apply(objectToValidate) == null,
+                objectToValidate ->
+                        String.format("[object: %s, field value: %s]: Value of a required field was null",
+                                objectToValidate.getClass().getSimpleName(), fieldGetter.apply(objectToValidate)
+                        )
         );
     }
 

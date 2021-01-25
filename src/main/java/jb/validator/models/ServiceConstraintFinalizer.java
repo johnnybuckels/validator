@@ -1,8 +1,9 @@
 package jb.validator.models;
 
+import jb.validator.ThrowingConsumer;
+
 import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -21,7 +22,7 @@ public interface ServiceConstraintFinalizer<CT, FT> {
      * @param <X> type of the optionals content.
      * @return a constraint that will fail if the returned optional empty.
      */
-    <X> Constraint<CT> assertExistenceUsing(Function<FT, Optional<X>> serviceFunction);
+    <X> Constraint<CT> presentUsing(Function<FT, Optional<X>> serviceFunction);
 
     String existenceFailMessageDefault = "Requested data object does not exist";
 
@@ -33,7 +34,7 @@ public interface ServiceConstraintFinalizer<CT, FT> {
      * @param <X> type of the optionals content.
      * @return a constraint that will fail if the returned optional is not empty.
      */
-    <X> Constraint<CT> assertAbsenceUsing(Function<FT, Optional<X>> serviceFunction);
+    <X> Constraint<CT> absentUsing(Function<FT, Optional<X>> serviceFunction);
 
     String absenceFailMessageDefault = "Requested data object already exists";
 
@@ -46,7 +47,7 @@ public interface ServiceConstraintFinalizer<CT, FT> {
      * @param <X> type of the collections content.
      * @return a constraint that will fail if the returned collection is empty.
      */
-    <X> Constraint<CT> assertEmptyUsing(Function<FT, Collection<X>> serviceFunction);
+    <X> Constraint<CT> emptyUsing(Function<FT, Collection<X>> serviceFunction);
 
     String emptyCollectionFailMessageDefault = "Requested data object collection is empty";
 
@@ -59,7 +60,7 @@ public interface ServiceConstraintFinalizer<CT, FT> {
      * @param <X> type of the collections content.
      * @return a constraint that will fail if the returned collection is not empty.
      */
-    <X> Constraint<CT> assertNotEmptyUsing(Function<FT, Collection<X>> serviceFunction);
+    <X> Constraint<CT> notEmptyUsing(Function<FT, Collection<X>> serviceFunction);
 
     String nonEmptyCollectionFailMessageDefault = "Requested data object collection is not empty";
 
@@ -73,6 +74,6 @@ public interface ServiceConstraintFinalizer<CT, FT> {
      * @param fieldConsumer void function consuming the earlier defined field value.
      * @return a constraint that will fail if the field consumer throws an exception.
      */
-    Constraint<CT> assertNotThrowingUsing(Consumer<FT> fieldConsumer);
+    Constraint<CT> noThrowsUsing(ThrowingConsumer<FT> fieldConsumer);
 
 }
